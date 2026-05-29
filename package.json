@@ -1,0 +1,21 @@
+{
+  "name": "data-pipeline-harness",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Generates seed data, inserts into SQLite, runs pipeline transformations, and validates output integrity.",
+  "license": "MIT",
+  "author": "Megan Wall",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "node --disable-warning=ExperimentalWarning --test test/db.test.js test/seeder.test.js test/transformer/normalize.test.js test/transformer/aggregate.test.js test/transformer/stage.test.js test/validator.test.js test/pipeline.integration.test.js",
+    "lint": "eslint src test",
+    "pipeline": "node --disable-warning=ExperimentalWarning src/pipeline.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0"
+  }
+}
