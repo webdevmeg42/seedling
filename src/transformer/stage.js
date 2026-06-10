@@ -1,6 +1,7 @@
+import { withTransaction } from '../db.js';
+
 export function stage(db) {
-  db.exec('BEGIN');
-  try {
+  withTransaction(db, () => {
     // Pass 1: copy one row per order_item (joined with order fields) into staging_raw
     db.exec(`
       INSERT INTO staging_raw
@@ -67,11 +68,7 @@ export function stage(db) {
       JOIN order_totals ot ON ot.order_id = sc.order_id
     `);
 
-    db.exec('COMMIT');
-  } catch (err) {
-    db.exec('ROLLBACK');
-    throw err;
-  }
+  });
 
   const rawCount   = db.prepare('SELECT COUNT(*) as count FROM staging_raw').get().count;
   const cleanCount = db.prepare('SELECT COUNT(*) as count FROM staging_clean').get().count;

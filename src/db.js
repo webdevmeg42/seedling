@@ -1,5 +1,16 @@
 import { DatabaseSync } from 'node:sqlite';
 
+export function withTransaction(db, fn) {
+  db.exec('BEGIN');
+  try {
+    fn();
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
+
 export function createDb(path = ':memory:') {
   const db = new DatabaseSync(path);
   db.exec('PRAGMA journal_mode = WAL');

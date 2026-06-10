@@ -1,3 +1,5 @@
+import { withTransaction } from '../db.js';
+
 const FIRST_NAMES = ['Alice', 'Bob', 'Carol', 'David', 'Eve', 'Frank', 'Grace', 'Hank', 'Iris', 'Jake'];
 const LAST_NAMES = ['Smith', 'Jones', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore'];
 const CATEGORIES = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports'];
@@ -34,8 +36,7 @@ export function seed(db, { count = 50 } = {}) {
   const NUM_CUSTOMERS = 10;
   const NUM_PRODUCTS = 20;
 
-  db.exec('BEGIN');
-  try {
+  withTransaction(db, () => {
     for (let i = 1; i <= NUM_CUSTOMERS; i++) {
       insertCustomer.run(
         i,
@@ -62,10 +63,5 @@ export function seed(db, { count = 50 } = {}) {
         insertItem.run(itemId++, orderId, productId, rand(1, 10), unit_price);
       }
     }
-
-    db.exec('COMMIT');
-  } catch (err) {
-    db.exec('ROLLBACK');
-    throw err;
-  }
+  });
 }

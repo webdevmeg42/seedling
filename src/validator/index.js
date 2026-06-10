@@ -1,5 +1,6 @@
 export function validate(db) {
   const checks = [];
+  const getCount = (sql) => db.prepare(sql).get().count;
 
   function check(name, fn) {
     try {
@@ -11,14 +12,10 @@ export function validate(db) {
   }
 
   check('order_totals_row_count', () => {
-    const ordersWithItems = db
-      .prepare('SELECT COUNT(DISTINCT order_id) as count FROM order_items')
-      .get().count;
-    const totals = db.prepare('SELECT COUNT(*) as count FROM order_totals').get().count;
+    const ordersWithItems = getCount('SELECT COUNT(DISTINCT order_id) as count FROM order_items');
+    const totals = getCount('SELECT COUNT(*) as count FROM order_totals');
     if (totals !== ordersWithItems) {
-      throw new Error(
-        `order_totals has ${totals} rows but ${ordersWithItems} orders have items`
-      );
+      throw new Error(`order_totals has ${totals} rows but ${ordersWithItems} orders have items`);
     }
   });
 
@@ -40,44 +37,32 @@ export function validate(db) {
   });
 
   check('no_null_totals', () => {
-    const { count } = db
-      .prepare(
-        'SELECT COUNT(*) as count FROM order_totals WHERE subtotal IS NULL OR tax IS NULL OR total IS NULL'
-      )
-      .get();
-    if (count > 0) {
-      throw new Error(`${count} rows in order_totals have NULL values`);
-    }
+    const count = getCount(
+      'SELECT COUNT(*) as count FROM order_totals WHERE subtotal IS NULL OR tax IS NULL OR total IS NULL'
+    );
+    if (count > 0) { throw new Error(`${count} rows in order_totals have NULL values`); }
   });
 
   check('referential_integrity_order_items', () => {
-    const { count } = db
-      .prepare(
-        'SELECT COUNT(*) as count FROM order_items oi LEFT JOIN orders o ON o.id = oi.order_id WHERE o.id IS NULL'
-      )
-      .get();
-    if (count > 0) {
-      throw new Error(`${count} order_items rows reference non-existent orders`);
-    }
+    const count = getCount(
+      'SELECT COUNT(*) as count FROM order_items oi LEFT JOIN orders o ON o.id = oi.order_id WHERE o.id IS NULL'
+    );
+    if (count > 0) { throw new Error(`${count} order_items rows reference non-existent orders`); }
   });
 
   check('staging_clean_lte_staging_raw', () => {
-    const rawCount = db.prepare('SELECT COUNT(*) as count FROM staging_raw').get().count;
-    const cleanCount = db.prepare('SELECT COUNT(*) as count FROM staging_clean').get().count;
+    const rawCount = getCount('SELECT COUNT(*) as count FROM staging_raw');
+    const cleanCount = getCount('SELECT COUNT(*) as count FROM staging_clean');
     if (cleanCount > rawCount) {
-      throw new Error(
-        `staging_clean (${cleanCount}) has more rows than staging_raw (${rawCount})`
-      );
+      throw new Error(`staging_clean (${cleanCount}) has more rows than staging_raw (${rawCount})`);
     }
   });
 
   check('reporting_orders_excludes_cancelled', () => {
-    const { count } = db
-      .prepare("SELECT COUNT(*) as count FROM reporting_orders WHERE order_status = 'cancelled'")
-      .get();
-    if (count > 0) {
-      throw new Error(`reporting_orders contains ${count} cancelled orders`);
-    }
+    const count = getCount(
+      "SELECT COUNT(*) as count FROM reporting_orders WHERE order_status = 'cancelled'"
+    );
+    if (count > 0) { throw new Error(`reporting_orders contains ${count} cancelled orders`); }
   });
 
   const failed = checks.filter((c) => !c.passed).length;

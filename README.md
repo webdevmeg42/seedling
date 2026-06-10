@@ -1,6 +1,6 @@
 # Data Pipeline Test Harness
 
-![CI](../../actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/webdevmeg42/seedling/actions/workflows/ci.yml/badge.svg)](https://github.com/webdevmeg42/seedling/actions/workflows/ci.yml)
 
 A Node.js project that generates order fulfillment seed data, inserts it into SQLite, runs multi-stage pipeline transformations, and validates output integrity with named assertions.
 
